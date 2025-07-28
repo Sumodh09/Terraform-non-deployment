@@ -9,9 +9,11 @@ def installTerraform() {
             unzip terraform_1.0.0_linux_amd64.zip
             sudo mv terraform /usr/local/bin/
             rm -f terraform_1.0.0_linux_amd64.zip
+	    sudo yum install -y jq
         '''
     } else {
         echo "Terraform already installed!"
+	sudo yum install -y jq
     }
 }
 
