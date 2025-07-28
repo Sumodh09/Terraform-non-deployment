@@ -13,7 +13,6 @@ def installTerraform() {
         '''
     } else {
         echo "Terraform already installed!"
-	sudo yum install -y jq
     }
 }
 
