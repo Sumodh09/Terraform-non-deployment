@@ -42,7 +42,36 @@ pipeline {
                     // CD into deployment folder and run terraform commands
                     dir('Non-Deployment/EC2') {
                         sh '''
-                            terraform destroy -auto-approve
+                            #!/bin/bash
+                            
+                            # Load JSON file
+                            terraform init
+                            terraform plan 
+                            terraform apply -auto-approve
+                            terraform output -raw ec2_instance_details_json > ec2_data.json
+                            
+                            INPUT_FILE="ec2_data.json"
+                            
+                            # Check if file exists
+                            if [ ! -f "$INPUT_FILE" ]; then
+                              echo "Error: $INPUT_FILE not found!"
+                              exit 1
+                            fi
+                            
+                            echo "Instance Compliance Report:"
+                            echo "---------------------------"
+                            
+                            # Loop through all instances and check compliance
+                            jq -r '
+                              to_entries[] |
+                              .key as $id |
+                              .value.availability_zone as $az |
+                              if ($az | startswith("us-east-1")) then
+                                "\\($id): \\($az) -> Compliant"
+                              else
+                                "\\($id): \\($az) -> Non-Compliant"
+                              end
+                            ' "$INPUT_FILE"
                         '''
                     }
                 }
