@@ -87,6 +87,7 @@ pipeline {
                             #!/bin/bash
                             
                             # Load JSON file
+			    terraform init
                             terraform plan
                             terraform apply -auto-approve
                             terraform output -raw lambda_functions_config_json > lambda_detailss.json
