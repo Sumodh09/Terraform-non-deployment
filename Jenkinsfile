@@ -140,6 +140,41 @@ pipeline {
 							  "\(.key): " + 
 							  (if .value.vpc_id == $vpc_id then "COMPLIANT" else "NON-COMPLIANT" end)
 							' "$JSON_FILE"
+	                '''
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Deployment for Cloudformation') {
+            steps {
+                script {
+                    // CD into deployment folder and run terraform commands
+                    dir('Non-Deployment/Cloudformation') {
+                        sh '''
+                            #!/bin/bash
+                            
+                            # Load JSON file
+			                terraform init
+                            terraform plan
+                            # Step 1: Apply Terraform (auto-approve for non-interactive)
+							echo "Applying Terraform..."
+							terraform apply -auto-approve
+							
+							# Step 2: Capture output into JSON file
+							echo "Capturing output to cloudformation_detailed.json..."
+							terraform output -json cloudformation_stack_json > cloudformation_detailed.json
+							
+							# Step 3: Parse and check stack names for compliance
+							echo "Checking stack name compliance..."
+							jq -r 'to_entries[] | "\(.key)"' cloudformation_detailed.json | while read -r stack_name; do
+							  if [[ "$stack_name" == *-stack ]]; then
+							    echo "Stack '$stack_name' is COMPLIANT."
+							  else
+							    echo "Stack '$stack_name' is NON-COMPLIANT."
+							  fi
+							done
+						'''
                     }
                 }
             }
