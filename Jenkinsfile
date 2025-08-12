@@ -86,7 +86,7 @@ pipeline {
                             #!/bin/bash
                             
                             # Load JSON file
-			    terraform init
+			                terraform init
                             terraform plan
                             terraform apply -auto-approve
                             terraform output -raw lambda_functions_config_json > lambda_detailss.json
@@ -137,7 +137,7 @@ pipeline {
 							
 							jq -r --arg vpc_id "$VPC_ID_TO_CHECK" '
 							  to_entries[] |
-							  "\(.key): " + 
+							  "\\(.key): " + 
 							  (if .value.vpc_id == $vpc_id then "COMPLIANT" else "NON-COMPLIANT" end)
 							' "$JSON_FILE"
 	                '''
@@ -167,7 +167,7 @@ pipeline {
 							
 							# Step 3: Parse and check stack names for compliance
 							echo "Checking stack name compliance..."
-							jq -r 'to_entries[] | "\(.key)"' cloudformation_detailed.json | while read -r stack_name; do
+							jq -r 'to_entries[] | "\\(.key)"' cloudformation_detailed.json | while read -r stack_name; do
 							  if [[ "$stack_name" == *-stack ]]; then
 							    echo "Stack '$stack_name' is COMPLIANT."
 							  else
