@@ -117,5 +117,32 @@ pipeline {
                 }
             }
         }
+
+		stage('Terraform Deployment for Security Group') {
+            steps {
+                script {
+                    // CD into deployment folder and run terraform commands
+                    dir('Non-Deployment/Security-Group') {
+                        sh '''
+                            #!/bin/bash
+                            
+                            # Load JSON file
+			                terraform init
+                            terraform plan
+                            terraform apply -auto-approve
+                            terraform output -json security_group_details > sg_details.json
+
+							VPC_ID_TO_CHECK="vpc-0ba50349bcd767084"
+							JSON_FILE="sg_details.json"
+							
+							jq -r --arg vpc_id "$VPC_ID_TO_CHECK" '
+							  to_entries[] |
+							  "\(.key): " + 
+							  (if .value.vpc_id == $vpc_id then "COMPLIANT" else "NON-COMPLIANT" end)
+							' "$JSON_FILE"
+                    }
+                }
+            }
+        }
     }
 }
