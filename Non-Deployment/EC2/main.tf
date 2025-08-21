@@ -30,11 +30,6 @@ resource "local_file" "ec2_detail_file" {
   filename = "${path.module}/ec2_detail.json"
 }
 
-# Ensure bucket exists
-resource "aws_s3_bucket" "my_bucket" {
-  bucket = "demo-csv-bucket-name-demo"
-}
-
 # Upload the JSON file to S3
 resource "aws_s3_object" "ec2_detail_object" {
   bucket = aws_s3_bucket.my_bucket.bucket
