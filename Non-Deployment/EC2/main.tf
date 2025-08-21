@@ -29,7 +29,6 @@ resource "null_resource" "apply" {
   provisioner "local-exec" {
     command = "terraform apply -auto-approve" 
   }
-  depends_on = [null_resource.ec2_instance_details_json]
 }
 
 resource "null_resource" "json_upload" {
