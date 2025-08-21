@@ -14,9 +14,8 @@ data "aws_instance" "details" {
   instance_id = each.key
 }
 
-# Output instance details
-output "ec2_instance_details_json" {
-  value = jsonencode({
+locals {
+  ec2_details_json = jsonencode({
     for id, instance in data.aws_instance.details :
     id => {
       availability_zone = instance.availability_zone
@@ -25,24 +24,21 @@ output "ec2_instance_details_json" {
   })
 }
 
-resource "null_resource" "apply" {
-  provisioner "local-exec" {
-    command = "terraform apply -auto-approve" 
-  }
+# Write the JSON to a local file
+resource "local_file" "ec2_detail_file" {
+  content  = local.ec2_details_json
+  filename = "${path.module}/ec2_detail.json"
 }
 
-resource "null_resource" "json_upload" {
-  provisioner "local-exec" {
-    command = "terraform output -raw ec2_instance_details_json > ec2_data.json" 
-  }
-  depends_on = [null_resource.apply]
+# Ensure bucket exists
+resource "aws_s3_bucket" "my_bucket" {
+  bucket = "demo-csv-bucket-name-demo"
 }
 
-resource "aws_s3_object" "my_script_zip" {
+# Upload the JSON file to S3
+resource "aws_s3_object" "ec2_detail_object" {
   bucket = aws_s3_bucket.my_bucket.bucket
-  key    = "ec2_data.json" 
-  source = "${path.module}/EC2/ec2_data.json"
-  acl    = "private"
-
-  depends_on = [null_resource.json_upload]
+  key    = "ec2-detail.json"
+  source = local_file.ec2_detail_file.filename
+  etag   = filemd5(local_file.ec2_detail_file.filename)
 }
