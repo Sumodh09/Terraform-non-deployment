@@ -89,11 +89,11 @@ pipeline {
 			                terraform init
                             terraform plan
                             terraform apply -auto-approve
-                            terraform output -raw lambda_functions_config_json > lambda_detailss.json
+                            terraform output -raw lambda_functions_config_json > lambda_details.json
                             #!/bin/bash
                             
                             # File to read
-                            INPUT_FILE="lambda_detailss.json"
+                            INPUT_FILE="lambda_details.json"
                             
                             # Check if file exists
                             if [[ ! -f "$INPUT_FILE" ]]; then
