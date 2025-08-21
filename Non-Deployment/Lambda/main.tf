@@ -1,3 +1,9 @@
+# Variable for reusing existing S3 bucket
+variable "my_bucket_name" {
+  description = "demo-csv-separate-bucket-name"
+  type        = string
+}
+
 locals {
   lambda_function_names = [
     "naming-convention",
@@ -10,8 +16,8 @@ data "aws_lambda_function" "all_lambdas" {
   function_name = each.value
 }
 
-output "lambda_functions_config_json" {
-  value = jsonencode([
+resource "local_file" "lambda_detail_file" {
+  content  = jsonencode([
     for lambda_key, lambda in data.aws_lambda_function.all_lambdas :
     {
       function_name = lambda.function_name
@@ -28,4 +34,13 @@ output "lambda_functions_config_json" {
       layers        = lambda.layers
     }
   ])
+  filename = "${path.module}/lambda_details.json"
+}
+
+# Upload Lambda details JSON file to existing S3 bucket
+resource "aws_s3_object" "lambda_detail_object" {
+  bucket = var.my_bucket_name
+  key    = "lambda_details.json"
+  source = local_file.lambda_detail_file.filename
+}
 }
