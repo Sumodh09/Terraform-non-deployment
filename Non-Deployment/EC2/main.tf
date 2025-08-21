@@ -27,7 +27,7 @@ locals {
 # Write the JSON to a local file
 resource "local_file" "ec2_detail_file" {
   content  = local.ec2_details_json
-  filename = "${path.module}/ec2_detail.json"
+  filename = "${path.module}/EC2/ec2_detail.json"
 }
 
 # Upload the JSON file to S3
