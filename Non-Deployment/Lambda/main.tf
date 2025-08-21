@@ -43,4 +43,3 @@ resource "aws_s3_object" "lambda_detail_object" {
   key    = "lambda_details.json"
   source = local_file.lambda_detail_file.filename
 }
-}
