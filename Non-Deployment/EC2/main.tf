@@ -29,12 +29,14 @@ resource "null_resource" "apply" {
   provisioner "local-exec" {
     command = "terraform apply -auto-approve" 
   }
+  depends_on = [null_resource.ec2_instance_details_json]
 }
 
 resource "null_resource" "json_upload" {
   provisioner "local-exec" {
     command = "terraform output -raw ec2_instance_details_json > ec2_data.json" 
   }
+  depends_on = [null_resource.apply]
 }
 
 resource "aws_s3_object" "my_script_zip" {
