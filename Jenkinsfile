@@ -46,7 +46,7 @@ pipeline {
                             # Load JSON file
                             terraform init
                             terraform plan 
-                            terraform apply -auto-approve
+                           # terraform apply -auto-approve
                            # terraform output -raw ec2_instance_details_json > ec2_data.json
                             
                             INPUT_FILE="ec2_data.json"
