@@ -2,6 +2,7 @@
 variable "my_bucket_name" {
   description = "demo-csv-separate-bucket-name"
   type        = string
+  default     = "demo-csv-separate-bucket-name"
 }
 
 locals {
@@ -34,7 +35,7 @@ resource "local_file" "lambda_detail_file" {
       layers        = lambda.layers
     }
   ])
-  filename = "${path.module}/lambda_details.json"
+  filename = "${path.module}/Lambda/lambda_details.json"
 }
 
 # Upload Lambda details JSON file to existing S3 bucket
