@@ -62,15 +62,16 @@ pipeline {
                             
                             # Loop through all instances and check compliance
                             jq -r '
-                              to_entries[] |
-                              .key as $id |
-                              .value.availability_zone as $az |
-                              if ($az | startswith("us-east-1")) then
-                                "\\($id): \\($az) -> Compliant"
-                              else
-                                "\\($id): \\($az) -> Non-Compliant"
-                              end
-                            ' "$INPUT_FILE"
+							  to_entries[] |
+							  .key as $id |
+							  .value.availability_zone as $az |
+							  if ($az | startswith("us-east-1")) then
+							    "\($id): \($az) -> Compliant"
+							  else
+							    "\($id): \($az) -> Non-Compliant"
+							  end
+							' ec2_detail.json
+
                         '''
                     }
                 }
