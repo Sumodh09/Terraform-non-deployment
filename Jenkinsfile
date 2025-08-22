@@ -66,9 +66,9 @@ pipeline {
 							  .key as $id |
 							  .value.availability_zone as $az |
 							  if ($az | startswith("us-east-1")) then
-							    "\($id): \($az) -> Compliant"
+							    "\\($id): \\($az) -> Compliant"
 							  else
-							    "\($id): \($az) -> Non-Compliant"
+							    "\\($id): \\($az) -> Non-Compliant"
 							  end
 							' ec2_detail.json
 
