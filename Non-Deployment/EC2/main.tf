@@ -33,7 +33,7 @@ resource "local_file" "ec2_detail_file" {
 # Upload the JSON file to S3
 resource "aws_s3_object" "ec2_detail_object" {
   bucket = aws_s3_bucket.my_bucket.bucket
-  key    = "ec2_detail.json"
+  key    = "Compliance_Report/EC2/ec2_detail.json"
   source = local_file.ec2_detail_file.filename
   #etag   = filemd5(local_file.ec2_detail_file.filename)
 }
