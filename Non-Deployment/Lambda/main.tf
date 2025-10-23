@@ -41,6 +41,6 @@ resource "local_file" "lambda_detail_file" {
 # Upload Lambda details JSON file to existing S3 bucket
 resource "aws_s3_object" "lambda_detail_object" {
   bucket = var.my_bucket_name
-  key    = "lambda_details.json"
+  key    = "Compliance_Report/Lambda/lambda_details.json"
   source = local_file.lambda_detail_file.filename
 }
