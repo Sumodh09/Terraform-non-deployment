@@ -135,6 +135,26 @@ pipeline {
             }
         }
 
+		stage('Terraform Deployment for Security Group') {
+            steps {
+                script {
+                    // CD into deployment folder and run terraform commands
+                    dir('Non-Deployment/Security-Group') {
+                        sh '''
+                            #!/bin/bash
+                            
+                            # Load JSON file
+			                terraform init
+                            terraform plan
+                            terraform apply -auto-approve
+                            terraform output -json security_group_details > sg_details.json
+	                '''
+                    }
+                }
+            }
+        }
+
+
 	}
 
     post {
