@@ -1,15 +1,18 @@
 def installTerraform() {
-    // Check if terraform is already installed
     def terraformExists = sh(script: 'which terraform', returnStatus: true)
     if (terraformExists != 0) {
-        // Install terraform
         sh '''
-            echo "Installing Terraform..."
-            wget https://releases.hashicorp.com/terraform/1.0.0/terraform_1.0.0_linux_amd64.zip
-            unzip terraform_1.0.0_linux_amd64.zip
+            echo "Installing Terraform and jq..."
+
+            TERRAFORM_VERSION="1.0.0"
+            DOWNLOAD_URL="https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+
+            wget -q $DOWNLOAD_URL -O terraform.zip
+            unzip terraform.zip
             sudo mv terraform /usr/local/bin/
-            rm -f terraform_1.0.0_linux_amd64.zip
-	    sudo yum install -y jq
+            rm -f terraform.zip
+
+            sudo yum install -y jq
         '''
     } else {
         echo "Terraform already installed!"
@@ -22,7 +25,6 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                // Pull the git repo
                 checkout scm
             }
         }
@@ -30,155 +32,72 @@ pipeline {
         stage('Install Terraform') {
             steps {
                 script {
-                  installTerraform()
+                    installTerraform()
+                }
             }
+        }
 
-          }
-	     }
         stage('Terraform Deployment for EC2') {
             steps {
-                script {
-                    // CD into deployment folder and run terraform commands
-                    dir('Non-Deployment/EC2') {
+                dir('Non-Deployment/EC2') {
+                    script {
                         sh '''
-                            #!/bin/bash
-                            
-                            # Load JSON file
-                            terraform init
+                            set -e  # Exit immediately on any failure
+                            echo "Initializing Terraform..."
+                            terraform init 
+                            echo "Planning Terraform deployment..."
                             terraform plan 
-                            terraform apply -auto-approve
+                            echo "Applying Terraform..."
+                            terraform apply -auto-approve 
+                            echo "Exporting EC2 instance details..."
                             terraform output -raw ec2_instance_details_json > ec2_detail.json
-                            
+
                             INPUT_FILE="ec2_detail.json"
-                            
-                            # Check if file exists
+                            OUTPUT_FILE="ec2_compliance_report.csv"
+
                             if [ ! -f "$INPUT_FILE" ]; then
-                              echo "Error: $INPUT_FILE not found!"
-                              exit 1
+                                echo "------ Error: $INPUT_FILE not found! ------"
+                                exit 1
                             fi
-                            
-                            echo "Instance Compliance Report:"
-                            echo "---------------------------"
-                            
-                            # Loop through all instances and check compliance
-                            #jq -r '
-							 # to_entries[] |
-							  #.key as $id |
-							  #.value.availability_zone as $az |
-							  #if ($az | startswith("us-east-1")) then
-							   # "\\($id): \\($az) -> Compliant"
-							  #else
-							   # "\\($id): \\($az) -> Non-Compliant"
-							  #end
-							#' ec2_detail.json
 
+                            echo "Generating EC2 Compliance Report..."
+
+                            # Write CSV header
+                            echo "Instance_ID,Availability_Zone,Compliance_Status,Reason" > "$OUTPUT_FILE"
+
+                            # Parse JSON and append compliance results
+                            jq -r '
+                              to_entries[] |
+                              [
+                                .key,
+                                .value.availability_zone,
+                                (if (.value.availability_zone | startswith("us-east-1")) 
+                                  then "Compliant" 
+                                  else "Non-Compliant" 
+                                 end),
+                                (if (.value.availability_zone | startswith("us-east-1")) 
+                                  then "Availability zone is us-east-1" 
+                                  else "Availability zone is not us-east-1" 
+                                 end)
+                              ] | @csv
+                            ' "$INPUT_FILE" >> "$OUTPUT_FILE"
+
+                            echo "✅ EC2 Compliance Report generated at: $OUTPUT_FILE"
+                            echo "Report Preview:"
+                            cat "$OUTPUT_FILE"
                         '''
                     }
                 }
             }
         }
-    
-           stage('Terraform Deployment for Lambda') {
-            steps {
-                script {
-                    // CD into deployment folder and run terraform commands
-                    dir('Non-Deployment/Lambda') {
-                        sh '''
-                            #!/bin/bash
-                            
-                            # Load JSON file
-			                terraform init
-                            terraform plan
-                            terraform apply -auto-approve
-                            terraform output -raw lambda_functions_config_json > lambda_details.json
-                            #!/bin/bash
-                            
-                            # File to read
-                            INPUT_FILE="lambda_details.json"
-                            
-                            # Check if file exists
-                            if [[ ! -f "$INPUT_FILE" ]]; then
-                              echo "File $INPUT_FILE not found!"
-                              exit 1
-                            fi
-                            
-                            # Loop through each function and evaluate runtime
-                            jq -c '.[]' "$INPUT_FILE" | while read -r lambda; do
-                              function_name=$(echo "$lambda" | jq -r '.function_name')
-                              runtime=$(echo "$lambda" | jq -r '.runtime')
-                            
-                              if [[ "$runtime" == "python3.13" ]]; then
-                                echo "$function_name - lambda-compliant"
-                              else
-                                echo "$function_name - lambda-non-compliant"
-                              fi
-                            done
-                        '''
-                    }
-                }
-            }
+    }
+
+    post {
+        always {
+            echo "Pipeline execution completed."
         }
-
-		stage('Terraform Deployment for Security Group') {
-            steps {
-                script {
-                    // CD into deployment folder and run terraform commands
-                    dir('Non-Deployment/Security-Group') {
-                        sh '''
-                            #!/bin/bash
-                            
-                            # Load JSON file
-			                terraform init
-                            terraform plan
-                            terraform apply -auto-approve
-                            terraform output -json security_group_details > sg_details.json
-
-							VPC_ID_TO_CHECK="vpc-0ba50349bcd767084"
-							JSON_FILE="sg_details.json"
-							
-							jq -r --arg vpc_id "$VPC_ID_TO_CHECK" '
-							  to_entries[] |
-							  "\\(.key): " + 
-							  (if .value.vpc_id == $vpc_id then "COMPLIANT" else "NON-COMPLIANT" end)
-							' "$JSON_FILE"
-	                '''
-                    }
-                }
-            }
-        }
-
-        stage('Terraform Deployment for Cloudformation') {
-            steps {
-                script {
-                    // CD into deployment folder and run terraform commands
-                    dir('Non-Deployment/Cloudformation') {
-                        sh '''
-                            #!/bin/bash
-                            
-                            # Load JSON file
-			                terraform init
-                            terraform plan
-                            # Step 1: Apply Terraform (auto-approve for non-interactive)
-							echo "Applying Terraform..."
-							terraform apply -auto-approve
-							
-							# Step 2: Capture output into JSON file
-							echo "Capturing output to cloudformation_detailed.json..."
-							terraform output -json cloudformation_stack_json > cloudformation_detailed.json
-							
-							# Step 3: Parse and check stack names for compliance
-							echo "Checking stack name compliance..."
-							jq -r 'to_entries[] | "\\(.key)"' cloudformation_detailed.json | while read -r stack_name; do
-							  if [[ "$stack_name" == *-stack ]]; then
-							    echo "Stack '$stack_name' is COMPLIANT."
-							  else
-							    echo "Stack '$stack_name' is NON-COMPLIANT."
-							  fi
-							done
-						'''
-                    }
-                }
-            }
+        failure {
+            echo "Pipeline failed. Check the logs above."
         }
     }
 }
