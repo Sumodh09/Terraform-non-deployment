@@ -42,7 +42,7 @@ pipeline {
                 dir('Non-Deployment/EC2') {
                     script {
                         sh '''
-                            set -e  # Exit immediately on any failure
+                            
                             echo "Initializing Terraform..."
                             terraform init 
                             echo "Planning Terraform deployment..."
