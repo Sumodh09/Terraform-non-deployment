@@ -37,3 +37,6 @@ resource "aws_s3_object" "ec2_detail_object" {
   source = local_file.ec2_detail_file.filename
   #etag   = filemd5(local_file.ec2_detail_file.filename)
 }
+output "ec2_instance_details_json" {
+  value = local.ec2_details_json
+}
