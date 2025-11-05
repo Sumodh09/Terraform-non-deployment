@@ -66,5 +66,5 @@ resource "aws_s3_object" "ec2_compliance_object" {
   bucket = aws_s3_bucket.my_bucket.bucket
   key    = "Compliance_Report/EC2/ec2_compliance_report.csv"
   source = local_file.ec2_compliance_csv.filename
-  etag   = filemd5(local_file.ec2_compliance_csv.filename)
+  #etag   = filemd5(local_file.ec2_compliance_csv.filename)
 }
