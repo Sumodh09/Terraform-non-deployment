@@ -50,8 +50,8 @@ locals {
         "%s,%s,%s,%s",
         id,
         inst.availability_zone,
-        (startswith(inst.availability_zone, "us-east-1") ? "Compliant" : "Non-Compliant"),
-        (startswith(inst.availability_zone, "us-east-1") ? "Availability zone is us-east-1" : "Availability zone is not us-east-1")
+        (inst.availability_zone != "" && substr(inst.availability_zone, 0, 9) == "us-east-1" ? "Compliant" : "Non-Compliant"),
+        (inst.availability_zone != "" && substr(inst.availability_zone, 0, 9) == "us-east-1" ? "Availability zone is us-east-1" : "Availability zone is not us-east-1")
       )
     ]
   ))
