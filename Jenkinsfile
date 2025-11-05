@@ -69,7 +69,6 @@ pipeline {
                 }
             }
         }
-    }
 
      stage('Terraform Deployment for Lambda') {
             steps {
@@ -111,7 +110,7 @@ pipeline {
                 }
             }
         }
-
+	}
 
     post {
         always {
