@@ -50,10 +50,10 @@ pipeline {
                             echo "Applying Terraform..."
                             terraform apply -auto-approve 
                             echo "Exporting EC2 instance details..."
-                            terraform output -json ec2_instance_details_json | jq -r '.' > ec2_detail.json
+                            #terraform output -json ec2_instance_details_json | jq -r '.' > ec2_detail.json
 
                             INPUT_FILE="ec2_detail.json"
-                            OUTPUT_FILE="ec2_compliance_report.csv"
+                            #OUTPUT_FILE="ec2_compliance_report.csv"
 
                             if [ ! -f "$INPUT_FILE" ]; then
                                 echo "------ Error: $INPUT_FILE not found! ------"
@@ -62,29 +62,8 @@ pipeline {
 
                             echo "Generating EC2 Compliance Report..."
 
-                            # Write CSV header
-                            echo "Instance_ID,Availability_Zone,Compliance_Status,Reason" > "$OUTPUT_FILE"
+                           
 
-                            # Parse JSON and append compliance results
-                            jq -r '
-                              to_entries[] |
-                              [
-                                .key,
-                                .value.availability_zone,
-                                (if (.value.availability_zone | startswith("us-east-1")) 
-                                  then "Compliant" 
-                                  else "Non-Compliant" 
-                                 end),
-                                (if (.value.availability_zone | startswith("us-east-1")) 
-                                  then "Availability zone is us-east-1" 
-                                  else "Availability zone is not us-east-1" 
-                                 end)
-                              ] | @csv
-                            ' "$INPUT_FILE" >> "$OUTPUT_FILE"
-
-                            echo "✅ EC2 Compliance Report generated at: $OUTPUT_FILE"
-                            echo "Report Preview:"
-                            cat "$OUTPUT_FILE"
                         '''
                     }
                 }
