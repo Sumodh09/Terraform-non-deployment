@@ -110,6 +110,31 @@ pipeline {
                 }
             }
         }
+
+		stage('Terraform Deployment for Cloudformation') {
+            steps {
+                script {
+                    // CD into deployment folder and run terraform commands
+                    dir('Non-Deployment/Cloudformation') {
+                        sh '''
+                            #!/bin/bash
+                            
+                            # Load JSON file
+			                terraform init
+                            terraform plan
+                            # Step 1: Apply Terraform (auto-approve for non-interactive)
+							echo "Applying Terraform..."
+							terraform apply -auto-approve
+							
+							# Step 2: Capture output into JSON file
+							echo "Capturing output to cloudformation_detailed.json..."
+							terraform output -json cloudformation_stack_json > cloudformation_detailed.json
+						'''
+                    }
+                }
+            }
+        }
+
 	}
 
     post {
